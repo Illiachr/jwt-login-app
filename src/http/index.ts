@@ -12,4 +12,22 @@ $api.interceptors.request.use(config => {
   return config;
 });
 
+$api.interceptors.response.use(config => {
+    return config;
+}, async error => {
+  const originalRequest = error.config;
+    if (error.response.status === 401 && error.config && !error.config._isRetry) {
+      try {
+        originalRequest._isRetry = true;
+        const res = await axios(`${API_URL}/refresh`, { withCredentials: true });
+        localStorage.setItem('token', res.data.accessToken);        
+        return $api.request(originalRequest);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    throw error;      
+  }  
+);
+
 export default $api;
